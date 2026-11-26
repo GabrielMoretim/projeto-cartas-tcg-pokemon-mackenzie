@@ -8,3 +8,4 @@ python-dotenv>=1.0
 streamlit>=1.44
 plotly>=5.22
 pytest>=8.0
+tzdata
