@@ -1,0 +1,26 @@
+name: coleta-diaria
+on:
+  schedule:
+    - cron: "30 21 * * *"   # 21h30 UTC = 18h30 em Brasília; o TCGCSV atualiza ~20h UTC
+  workflow_dispatch: {}
+concurrency: coleta-diaria
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements.txt
+      - name: coleta + silver + gold + carteira
+        run: python -m tcg daily
+        env:
+          PYTHONPATH: src
+          S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
+          S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
+          S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
+          S3_REGION: us-east-1
+          S3_BUCKET: tcg
+          GROUP_ID: ${{ vars.GROUP_ID }}
+          RESPONSAVEL: ${{ vars.RESPONSAVEL }}
