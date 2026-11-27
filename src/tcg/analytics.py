@@ -28,6 +28,8 @@ def um_acabamento_por_produto(df: pd.DataFrame) -> pd.DataFrame:
 
 def _largo(d: pd.DataFrame, valor: str) -> pd.DataFrame:
     """Matriz data x produto, com o último preço observado carregado (nulo vira o preço anterior)."""
+    if d.empty:
+        return pd.DataFrame()
     w = d.pivot_table(index="data", columns="product_id", values=valor, aggfunc="last")
     w = w.reindex(pd.date_range(w.index.min(), w.index.max(), freq="D"))
     return w.ffill()
@@ -62,8 +64,8 @@ def pergunta2(df, group_id, brl=True):
     d0 = d.data.min()
     saida = {}
     grupos = {
-                "Selados (média)": (d[(d.tipo_produto == "selado") & (d.categoria_selado != "booster box case")
-                              & ~d.nome.str.contains("Display", case=False, na=False)], "mean"),
+        "Selados (média)": (d[(d.tipo_produto == "selado") & (d.categoria_selado != "booster box case")
+                              & ~d.nome.str.contains("Display", case=False, na=False)], "mean"),  # ADR 0009
         "Cartas Double Rare+ (soma)": (d[(d.tipo_produto == "carta") & d.raridade.isin(config.RARIDADES_ALTAS)], "sum"),
     }
     for nome, (g, agg) in grupos.items():
@@ -128,8 +130,11 @@ def pergunta5(df, brl=True, min_usd=5.0):
     base = d.groupby("group_id").data.min().max()
     linhas = []
     for g, dg in d.groupby("group_id"):
-        usd = _largo(dg[dg.data >= base], "market_price")
-        w = _largo(dg[dg.data >= base], col)
+        sub = dg[dg.data >= base]
+        if sub.empty:  # coleção sem dados na janela comum (começou antes e parou, ou vice-versa)
+            continue
+        usd = _largo(sub, "market_price")
+        w = _largo(sub, col)
         if len(w) < 3:
             continue
         ok = usd.iloc[0] > min_usd
@@ -148,17 +153,31 @@ def pergunta5(df, brl=True, min_usd=5.0):
 
 # ---------------------------------------------------------------- placar da turma
 def placar(cart: pd.DataFrame, taxa: float = config.TAXA_VENDA) -> dict:
-    """cart: contrato gold_turma/carteira (todas as coleções)."""
-    c = cart[cart.taxa_venda.isin([taxa])].copy()
-    ult = c[c.data == c.groupby("group_id").data.transform("max")]
+    """cart: contrato gold_turma/carteira (todas as coleções).
+
+    Dólar e CDI não pagam taxa de venda: cada aluno pode tê-los gravado com taxa 0 ou com a taxa
+    padrão, então eles entram qualquer que seja o valor de `taxa_venda`.
+    """
+    c = cart[(cart.taxa_venda == taxa) | cart.carteira.isin(["dolar", "cdi"])]
+    c = c.drop_duplicates(["group_id", "carteira", "data"]).sort_values("data")
+    ult = c[c.data == c.groupby(["group_id", "carteira"]).data.transform("max")]
     p = ult.pivot_table(index="group_id", columns="carteira", values="retorno_acumulado")
-    c = c.sort_values("data")
-    c["dd"] = c.groupby(["group_id", "carteira"]).valor_brl.transform(lambda s: s / s.cummax() - 1)
+    c = c.assign(dd=c.groupby(["group_id", "carteira"]).valor_brl.transform(lambda s: s / s.cummax() - 1))
     dd = c.groupby(["group_id", "carteira"]).dd.min().unstack()
+
+    def vence(a: str, b: str) -> tuple[int | None, int]:
+        if not {a, b} <= set(p.columns):
+            return None, 0
+        ok = p[[a, b]].dropna()  # só coleções em que as duas carteiras existem
+        return int((ok[a] > ok[b]).sum()), len(ok)
+
+    de_cartas = dd.drop(columns=["dolar", "cdi"], errors="ignore").stack()
+    ganha_selado, n1 = vence("selado", "cdi")
+    ganha_cesta, n2 = vence("cesta_raras", "dolar")
     return {
         "colecoes": int(len(p)),
-        "selado_ganhou_do_cdi": int((p["selado"] > p["cdi"]).sum()) if {"selado", "cdi"} <= set(p) else None,
-        "cesta_ganhou_do_dolar": int((p["cesta_raras"] > p["dolar"]).sum()) if {"cesta_raras", "dolar"} <= set(p) else None,
-        "menor_perda_maxima": (dd.drop(columns=["dolar", "cdi"], errors="ignore").stack().idxmax() if len(dd) else None),  # (group_id, carteira)
+        "selado_ganhou_do_cdi": ganha_selado, "selado_comparaveis": n1,
+        "cesta_ganhou_do_dolar": ganha_cesta, "cesta_comparaveis": n2,
+        "menor_perda_maxima": ((int(de_cartas.idxmax()[0]), de_cartas.idxmax()[1]) if len(de_cartas) else None),
         "retornos": p, "perda_maxima": dd,
     }
