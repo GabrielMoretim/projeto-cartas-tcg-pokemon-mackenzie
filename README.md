@@ -4,15 +4,15 @@ Projeto do módulo *Data Collection and Storage* (MBA Engenharia de Dados, Macke
 Pipeline diário **TCGplayer (TCGCSV) + PTAX + CDI → RustFS (bruto) → silver Parquet/Pydantic → gold DuckDB → dashboard Streamlit**,
 com as cinco perguntas de investimento em reais e o desafio da carteira de R$ 1.000.
 
-**- \*\*Aluno:\*\* Gabriel Moretim**
+- \*\*Aluno:\*\* Gabriel Moretim**
 
-**- \*\*Repositório:\*\* https://github.com/GabrielMoretim/projeto-cartas-tcg-pokemon-mackenzie**
+- \*\*Repositório:\*\* https://github.com/GabrielMoretim/projeto-cartas-tcg-pokemon-mackenzie**
 
-**- \*\*Coleção escolhida:\*\* ME05: Pitch Black (PBL, groupId 24688)**
+- \*\*Coleção escolhida:\*\* ME05: Pitch Black (PBL, groupId 24688)**
 
-**- \*\*Início da coleta:\*\* 26/11/2026**
+- \*\*Início da coleta:\*\* 26/11/2026**
 
-**- \*\*Lacunas na série:\*\* nenhuma até o momento.**
+- \*\*Lacunas na série:\*\* nenhuma até o momento.**
 
 ## Arquitetura
 
@@ -64,7 +64,7 @@ PTAX é taxa de referência (cartão paga outra cotação + IOF). CDI sem IR. A 
 
 
 
-\## Por que a PBL
+## Por que a PBL
 
 
 
@@ -72,7 +72,7 @@ A coleção foi escolhida depois de comparar os preços reais do TCGCSV em 27/11
 
 
 
-\## No Windows (sem make)
+## No Windows (sem make)
 
 
 
@@ -102,7 +102,7 @@ Para gravar só em disco (sem tocar no lake da turma), use `set STORE=local` ant
 
 
 
-\## Observações sobre o resultado
+## Observações sobre o resultado
 
 
 
