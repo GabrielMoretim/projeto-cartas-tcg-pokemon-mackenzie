@@ -82,7 +82,7 @@ def _cambio(store, group_id: int) -> list[dict]:
     linhas = []
     for _, k in _datas_raw(store, "bcb_ptax", group_id):
         for b in json.loads(store.get(k)).get("value", []):
-            if b.get("tipoBoletim") != "Fechamento":
+            if not str(b.get("tipoBoletim", "")).startswith("Fechamento"):
                 continue
             quando = datetime.fromisoformat(b["dataHoraCotacao"])
             linhas.append(dict(data=quando.date(), cotacao_compra=b["cotacaoCompra"],

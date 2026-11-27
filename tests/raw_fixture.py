@@ -10,7 +10,7 @@ def _ptax(d):
     c, v = PTAX[d]
     return {"value": [
         {"cotacaoCompra": c - 0.01, "cotacaoVenda": v - 0.01, "dataHoraCotacao": f"{d} 10:08:00.000", "tipoBoletim": "Abertura"},
-        {"cotacaoCompra": c, "cotacaoVenda": v, "dataHoraCotacao": f"{d} 13:09:12.123", "tipoBoletim": "Fechamento"}]}
+        {"cotacaoCompra": c, "cotacaoVenda": v, "dataHoraCotacao": f"{d} 13:09:12.123", "tipoBoletim": "Fechamento PTAX"}]}
 
 
 def popular_raw(store, gid, preco_ruim=False):
