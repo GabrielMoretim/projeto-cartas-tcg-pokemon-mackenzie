@@ -62,7 +62,8 @@ def pergunta2(df, group_id, brl=True):
     d0 = d.data.min()
     saida = {}
     grupos = {
-        "Selados (média)": (d[d.tipo_produto == "selado"], "mean"),
+                "Selados (média)": (d[(d.tipo_produto == "selado") & (d.categoria_selado != "booster box case")
+                              & ~d.nome.str.contains("Display", case=False, na=False)], "mean"),
         "Cartas Double Rare+ (soma)": (d[(d.tipo_produto == "carta") & d.raridade.isin(config.RARIDADES_ALTAS)], "sum"),
     }
     for nome, (g, agg) in grupos.items():
